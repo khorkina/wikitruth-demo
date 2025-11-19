@@ -79,12 +79,12 @@ IMPORTANT: Write your response ONLY in ${outputLanguage}. Do not use any other l
       }
 
       const response = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        max_completion_tokens: 3000,
+        max_tokens: 3000,
       });
 
       return response.choices[0].message.content || "No comparison generated";
