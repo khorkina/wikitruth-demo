@@ -86,9 +86,9 @@ export class WikipediaService {
             size: result.size
           };
         })
-        .sort((a, b) => b.score - a.score) // Sort by relevance score
+        .sort((a: any, b: any) => b.score - a.score) // Sort by relevance score
         .slice(0, limit) // Take only requested amount
-        .map(({ score, wordcount, size, ...result }) => result); // Remove scoring fields
+        .map(({ score, wordcount, size, ...result }: any) => result); // Remove scoring fields
       
       return filteredResults;
     } catch (error) {

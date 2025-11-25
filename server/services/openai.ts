@@ -17,20 +17,29 @@ export class OpenAIService {
     
     // Log the articles being compared for debugging
     console.log('Articles being compared:', Object.keys(articles));
-    console.log('Article lengths (full):', Object.entries(articles).map(([lang, content]) => 
+    console.log('Article lengths (full - no truncation):', Object.entries(articles).map(([lang, content]) => 
       `${lang}: ${content.length} characters`
     ));
     
-    // Use full articles without truncation - GPT-4o supports 128K tokens
-    const articleData = JSON.stringify(articles, null, 2);
-    
-    const systemPrompt = isFunnyMode 
-      ? this.getFunnyModeSystemPrompt(outputLanguage)
-      : this.getStandardSystemPrompt(outputLanguage);
-    
-    const userPrompt = `Please analyze and compare these Wikipedia articles about the same topic across different languages. Write your ENTIRE response in ${outputLanguage} language only.
+    try {
+      if (!openai) {
+        throw new Error('OpenAI API key not configured');
+      }
 
-${articleData}
+      // Use full articles without truncation - GPT-4o supports 128K tokens
+      // Format each article clearly with language headers
+      let articlesFormatted = '';
+      for (const [lang, content] of Object.entries(articles)) {
+        articlesFormatted += `\n\n=== ARTICLE IN ${lang.toUpperCase()} (${content.length} characters) ===\n\n${content}\n`;
+      }
+
+      const systemPrompt = isFunnyMode 
+        ? this.getFunnyModeSystemPrompt(outputLanguage)
+        : this.getStandardSystemPrompt(outputLanguage);
+
+      const userPrompt = `Please analyze and compare these COMPLETE Wikipedia articles about the same topic across different languages. Write your ENTIRE response in ${outputLanguage} language only.
+
+${articlesFormatted}
 
 Please provide a comprehensive comparison focusing on:
 1. Factual differences and variations in information
@@ -45,11 +54,6 @@ ${isFunnyMode
 }
 
 IMPORTANT: Write your response ONLY in ${outputLanguage}. Do not use any other language.`;
-
-    try {
-      if (!openai) {
-        throw new Error('OpenAI API key not configured');
-      }
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
