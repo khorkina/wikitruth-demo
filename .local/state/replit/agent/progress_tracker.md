@@ -7,3 +7,5 @@
 [x] 7. Migrated to full article analysis (no truncation) using GPT-4o's 128K context window
 [x] 8. Fixed MetaMask browser extension error overlay blocking the app
 [x] 9. Added Wikipedia-style donation banner with Ko-fi integration (ko-fi.com/wikitruth)
+[x] 10. Removed AI Model selection section from premium comparison options
+[x] 11. Updated chat button to bright green color with bounce animation

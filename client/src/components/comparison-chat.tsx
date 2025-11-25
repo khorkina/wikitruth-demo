@@ -124,7 +124,7 @@ export function ComparisonChat({
       <div className="fixed bottom-20 left-6 z-50">
         <Button
           onClick={onToggle}
-          className="rounded-full w-14 h-14 bg-purple-600 hover:bg-purple-700 shadow-lg"
+          className="rounded-full w-14 h-14 bg-green-500 hover:bg-green-600 shadow-lg animate-bounce"
         >
           <MessageCircle className="h-6 w-6" />
         </Button>

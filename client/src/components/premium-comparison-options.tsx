@@ -182,49 +182,6 @@ export function PremiumComparisonOptions({
             </Select>
           </CardContent>
         </Card>
-
-        {/* AI Model Selection */}
-        <Card className="h-fit">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <Bot className="h-4 w-4 md:h-5 md:w-5" />
-              AI Model
-            </CardTitle>
-            <CardDescription className="text-sm">Select your preferred analysis model</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <RadioGroup
-              value={options.aiModel}
-              onValueChange={(value: 'free' | 'premium') => updateOption('aiModel', value)}
-              className="space-y-3"
-            >
-              <div className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                <RadioGroupItem value="premium" id="premium-model" className="mt-1" />
-                <Label htmlFor="premium-model" className="flex-1 cursor-pointer">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <div>
-                      <div className="font-medium text-sm md:text-base">OpenAI GPT-4o</div>
-                      <div className="text-xs md:text-sm text-gray-500">Enhanced analysis, full articles</div>
-                    </div>
-                    <Badge variant="default" className="bg-green-100 text-green-700 w-fit">Recommended</Badge>
-                  </div>
-                </Label>
-              </div>
-              <div className="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                <RadioGroupItem value="free" id="standard-model" className="mt-1" />
-                <Label htmlFor="standard-model" className="flex-1 cursor-pointer">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <div>
-                      <div className="font-medium text-sm md:text-base">Standard Model</div>
-                      <div className="text-xs md:text-sm text-gray-500">Fast analysis, good quality</div>
-                    </div>
-                    <Badge variant="secondary" className="w-fit">Alternative</Badge>
-                  </div>
-                </Label>
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Focus Points */}
