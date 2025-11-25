@@ -12,44 +12,17 @@ export interface ComparisonRequest {
 }
 
 export class OpenAIService {
-  private truncateArticle(content: string, maxChars: number = 6000): string {
-    if (content.length <= maxChars) {
-      return content;
-    }
-    
-    const truncated = content.substring(0, maxChars);
-    const lastPeriod = truncated.lastIndexOf('.');
-    const lastNewline = truncated.lastIndexOf('\n');
-    
-    // Try to end at a natural break point
-    const breakPoint = Math.max(lastPeriod, lastNewline);
-    if (breakPoint > maxChars * 0.8) {
-      return truncated.substring(0, breakPoint + 1);
-    }
-    
-    return truncated + "...";
-  }
-
   async compareArticles(request: ComparisonRequest): Promise<string> {
     const { articles, outputLanguage, isFunnyMode = false } = request;
     
     // Log the articles being compared for debugging
     console.log('Articles being compared:', Object.keys(articles));
-    console.log('Article lengths:', Object.entries(articles).map(([lang, content]) => 
+    console.log('Article lengths (full):', Object.entries(articles).map(([lang, content]) => 
       `${lang}: ${content.length} characters`
     ));
     
-    // Truncate articles to prevent token limit issues
-    const truncatedArticles: Record<string, string> = {};
-    Object.entries(articles).forEach(([lang, content]) => {
-      const truncated = this.truncateArticle(content, 6000);
-      truncatedArticles[lang] = truncated;
-      if (truncated.length < content.length) {
-        console.log(`Truncated ${lang} article: ${content.length} -> ${truncated.length} characters`);
-      }
-    });
-    
-    const articleData = JSON.stringify(truncatedArticles, null, 2);
+    // Use full articles without truncation - GPT-4o supports 128K tokens
+    const articleData = JSON.stringify(articles, null, 2);
     
     const systemPrompt = isFunnyMode 
       ? this.getFunnyModeSystemPrompt(outputLanguage)
@@ -84,7 +57,8 @@ IMPORTANT: Write your response ONLY in ${outputLanguage}. Do not use any other l
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        max_tokens: 3000,
+        max_tokens: 4096,
+        temperature: 0.7,
       });
 
       return response.choices[0].message.content || "No comparison generated";
