@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ResponsiveNav } from "@/components/responsive-nav";
 import { MobileFAB } from "@/components/mobile-fab";
 import { Footer } from "@/components/footer";
+import { DonationBanner } from "@/components/donation-banner";
 import { clientStorage } from "@/lib/storage";
 import Home from "@/pages/home";
 import MainPage from "@/pages/main";
@@ -74,6 +75,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="min-h-screen bg-white">
+          <DonationBanner />
           <ResponsiveNav />
           
           <div className="desktop-content">
