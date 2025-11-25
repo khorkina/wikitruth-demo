@@ -1,33 +1,20 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { X, Heart } from 'lucide-react';
 
 export function DonationBanner() {
+  const [location] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
-  const BANNER_KEY = 'wikitruth_donation_banner_dismissed';
-  const SHOW_INTERVAL_DAYS = 7;
 
   useEffect(() => {
-    const dismissedData = localStorage.getItem(BANNER_KEY);
-    
-    if (!dismissedData) {
+    if (location === '/') {
       setIsVisible(true);
-      return;
+    } else {
+      setIsVisible(false);
     }
-
-    try {
-      const { timestamp } = JSON.parse(dismissedData);
-      const daysSinceDismissed = (Date.now() - timestamp) / (1000 * 60 * 60 * 24);
-      
-      if (daysSinceDismissed >= SHOW_INTERVAL_DAYS) {
-        setIsVisible(true);
-      }
-    } catch (error) {
-      setIsVisible(true);
-    }
-  }, []);
+  }, [location]);
 
   const handleDismiss = () => {
-    localStorage.setItem(BANNER_KEY, JSON.stringify({ timestamp: Date.now() }));
     setIsVisible(false);
   };
 
@@ -58,10 +45,9 @@ export function DonationBanner() {
                 href="https://ko-fi.com/wikitruth"
                 target="_blank"
                 rel="noopener noreferrer"
+                data-testid="donation-kofi-link"
                 className="inline-flex items-center justify-center px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-sm hover:shadow-md text-sm md:text-base"
-                onClick={() => {
-                  localStorage.setItem(BANNER_KEY, JSON.stringify({ timestamp: Date.now() }));
-                }}
+                onClick={handleDismiss}
               >
                 <Heart className="w-4 h-4 mr-2 fill-white" />
                 Support on Ko-fi
@@ -69,6 +55,7 @@ export function DonationBanner() {
               
               <button
                 onClick={handleDismiss}
+                data-testid="donation-dismiss-button"
                 className="inline-flex items-center justify-center px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 transition-colors duration-200 text-sm md:text-base"
               >
                 Maybe Later
@@ -78,6 +65,7 @@ export function DonationBanner() {
           
           <button
             onClick={handleDismiss}
+            data-testid="donation-close-button"
             className="flex-shrink-0 p-1 rounded-full hover:bg-gray-200 transition-colors duration-200"
             aria-label="Close banner"
           >
