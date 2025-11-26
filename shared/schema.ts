@@ -13,6 +13,16 @@ export const comparisons = pgTable("comparisons", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const highlights = pgTable("highlights", {
+  id: serial("id").primaryKey(),
+  comparisonId: integer("comparison_id").notNull(),
+  startOffset: integer("start_offset").notNull(),
+  endOffset: integer("end_offset").notNull(),
+  color: text("color").notNull(), // yellow, green, blue, pink, orange
+  excerpt: text("excerpt").notNull(), // Snippet of highlighted text for validation
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const searchSessions = pgTable("search_sessions", {
   id: serial("id").primaryKey(),
   sessionId: text("session_id").notNull().unique(),
@@ -32,10 +42,17 @@ export const insertSearchSessionSchema = createInsertSchema(searchSessions).omit
   createdAt: true,
 });
 
+export const insertHighlightSchema = createInsertSchema(highlights).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertComparison = z.infer<typeof insertComparisonSchema>;
 export type Comparison = typeof comparisons.$inferSelect;
 export type InsertSearchSession = z.infer<typeof insertSearchSessionSchema>;
 export type SearchSession = typeof searchSessions.$inferSelect;
+export type InsertHighlight = z.infer<typeof insertHighlightSchema>;
+export type Highlight = typeof highlights.$inferSelect;
 
 // Wikipedia API response types
 export const wikipediaSearchResultSchema = z.object({
