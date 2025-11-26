@@ -1,10 +1,13 @@
 import { 
   comparisons, 
   searchSessions,
+  highlights,
   type Comparison, 
   type InsertComparison,
   type SearchSession,
-  type InsertSearchSession 
+  type InsertSearchSession,
+  type Highlight,
+  type InsertHighlight
 } from "@shared/schema";
 
 export interface IStorage {
@@ -16,19 +19,29 @@ export interface IStorage {
   createSearchSession(session: InsertSearchSession): Promise<SearchSession>;
   getSearchSession(sessionId: string): Promise<SearchSession | undefined>;
   updateSearchSession(sessionId: string, updates: Partial<InsertSearchSession>): Promise<SearchSession | undefined>;
+  
+  // Highlight operations
+  createHighlight(highlight: InsertHighlight): Promise<Highlight>;
+  getHighlightsByComparisonId(comparisonId: number): Promise<Highlight[]>;
+  deleteHighlight(id: number): Promise<boolean>;
+  deleteHighlightsByComparisonId(comparisonId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private comparisons: Map<number, Comparison>;
   private searchSessions: Map<string, SearchSession>;
+  private highlights: Map<number, Highlight>;
   private currentComparisonId: number;
   private currentSessionId: number;
+  private currentHighlightId: number;
 
   constructor() {
     this.comparisons = new Map();
     this.searchSessions = new Map();
+    this.highlights = new Map();
     this.currentComparisonId = 1;
     this.currentSessionId = 1;
+    this.currentHighlightId = 1;
   }
 
   async createComparison(insertComparison: InsertComparison): Promise<Comparison> {
@@ -75,6 +88,46 @@ export class MemStorage implements IStorage {
     const updated: SearchSession = { ...existing, ...updates };
     this.searchSessions.set(sessionId, updated);
     return updated;
+  }
+
+  async createHighlight(insertHighlight: InsertHighlight): Promise<Highlight> {
+    const id = this.currentHighlightId++;
+    const highlight: Highlight = {
+      id,
+      comparisonId: insertHighlight.comparisonId,
+      startOffset: insertHighlight.startOffset,
+      endOffset: insertHighlight.endOffset,
+      color: insertHighlight.color,
+      excerpt: insertHighlight.excerpt,
+      createdAt: new Date()
+    };
+    this.highlights.set(id, highlight);
+    return highlight;
+  }
+
+  async getHighlightsByComparisonId(comparisonId: number): Promise<Highlight[]> {
+    const results: Highlight[] = [];
+    this.highlights.forEach((highlight) => {
+      if (highlight.comparisonId === comparisonId) {
+        results.push(highlight);
+      }
+    });
+    return results.sort((a, b) => a.startOffset - b.startOffset);
+  }
+
+  async deleteHighlight(id: number): Promise<boolean> {
+    return this.highlights.delete(id);
+  }
+
+  async deleteHighlightsByComparisonId(comparisonId: number): Promise<boolean> {
+    const toDelete: number[] = [];
+    this.highlights.forEach((highlight, id) => {
+      if (highlight.comparisonId === comparisonId) {
+        toDelete.push(id);
+      }
+    });
+    toDelete.forEach(id => this.highlights.delete(id));
+    return toDelete.length > 0;
   }
 }
 
