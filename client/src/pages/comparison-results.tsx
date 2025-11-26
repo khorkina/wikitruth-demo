@@ -9,6 +9,7 @@ import { getLanguageName, getLanguageNativeName } from '@/lib/languages';
 import { useToast } from '@/hooks/use-toast';
 import { ComparisonChat } from '@/components/comparison-chat';
 import { clientStorage } from '@/lib/storage';
+import { TextHighlighter } from '@/components/text-highlighter';
 
 
 // Enhanced markdown formatter function
@@ -347,15 +348,12 @@ export default function ComparisonResults() {
           )}
         </div>
 
-        {/* Comparison Content */}
-        <div className="prose prose-slate max-w-none markdown-content text-sm md:text-base">
-          <div 
-            className="formatted-content comparison-content leading-relaxed"
-            dangerouslySetInnerHTML={{ 
-              __html: formatMarkdownContent(comparison.comparisonResult) 
-            }}
-          />
-        </div>
+        {/* Comparison Content with Highlighting */}
+        <TextHighlighter
+          content={comparison.comparisonResult}
+          comparisonId={comparison.id}
+          formatContent={formatMarkdownContent}
+        />
 
         {/* Share Buttons */}
         <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-wiki-light-border">

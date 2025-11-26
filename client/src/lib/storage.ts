@@ -48,10 +48,20 @@ export interface SearchSession {
   createdAt: string;
 }
 
+export interface LocalHighlight {
+  id: string;
+  comparisonId: string;
+  startOffset: number;
+  endOffset: number;
+  color: string;
+  excerpt: string;
+  createdAt: string;
+}
+
 class ClientStorage {
   private db: IDBPDatabase | null = null;
   private dbName = 'WikiTruthDB';
-  private dbVersion = 3; // Incremented for subscription support
+  private dbVersion = 4; // Incremented for highlights support
 
   async init(): Promise<void> {
     this.db = await openDB(this.dbName, this.dbVersion, {
@@ -72,6 +82,12 @@ class ClientStorage {
         if (!db.objectStoreNames.contains('sessions')) {
           const sessionsStore = db.createObjectStore('sessions', { keyPath: 'id' });
           sessionsStore.createIndex('userId', 'userId', { unique: false });
+        }
+
+        // Highlights store
+        if (!db.objectStoreNames.contains('highlights')) {
+          const highlightsStore = db.createObjectStore('highlights', { keyPath: 'id' });
+          highlightsStore.createIndex('comparisonId', 'comparisonId', { unique: false });
         }
       },
     });
@@ -279,6 +295,48 @@ class ClientStorage {
         isPremium: false
       }
     });
+  }
+
+  // Highlights management
+  async saveHighlight(highlight: Omit<LocalHighlight, 'id' | 'createdAt'>): Promise<LocalHighlight> {
+    if (!this.db) await this.init();
+    
+    const fullHighlight: LocalHighlight = {
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+      ...highlight
+    };
+
+    await this.db!.put('highlights', fullHighlight);
+    return fullHighlight;
+  }
+
+  async getHighlightsByComparisonId(comparisonId: string): Promise<LocalHighlight[]> {
+    if (!this.db) await this.init();
+    
+    const tx = this.db!.transaction('highlights', 'readonly');
+    const index = tx.store.index('comparisonId');
+    const highlights = await index.getAll(comparisonId);
+    
+    return highlights.sort((a, b) => a.startOffset - b.startOffset);
+  }
+
+  async deleteHighlight(id: string): Promise<void> {
+    if (!this.db) await this.init();
+    await this.db!.delete('highlights', id);
+  }
+
+  async deleteHighlightsByComparisonId(comparisonId: string): Promise<void> {
+    if (!this.db) await this.init();
+    
+    const highlights = await this.getHighlightsByComparisonId(comparisonId);
+    const tx = this.db!.transaction('highlights', 'readwrite');
+    
+    for (const highlight of highlights) {
+      await tx.store.delete(highlight.id);
+    }
+    
+    await tx.done;
   }
 }
 

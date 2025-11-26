@@ -1,15 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Highlighter, X, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import type { Highlight } from '@shared/schema';
+import { clientStorage, type LocalHighlight } from '@/lib/storage';
 
 interface TextHighlighterProps {
   content: string;
-  comparisonId: number;
+  comparisonId: string | number;
   formatContent: (content: string) => string;
 }
 
@@ -34,26 +32,26 @@ export function TextHighlighter({ content, comparisonId, formatContent }: TextHi
   const contentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  const comparisonIdStr = String(comparisonId);
 
-  const { data: highlights = [] } = useQuery<Highlight[]>({
-    queryKey: ['/api/comparisons', comparisonId, 'highlights'],
+  const { data: highlights = [] } = useQuery<LocalHighlight[]>({
+    queryKey: ['highlights', comparisonIdStr],
     queryFn: async () => {
-      const response = await fetch(`/api/comparisons/${comparisonId}/highlights`);
-      if (!response.ok) throw new Error('Failed to fetch highlights');
-      return response.json();
+      return clientStorage.getHighlightsByComparisonId(comparisonIdStr);
     },
     enabled: !!comparisonId,
   });
 
   const createHighlightMutation = useMutation({
     mutationFn: async (data: { startOffset: number; endOffset: number; color: string; excerpt: string }) => {
-      return apiRequest(`/api/comparisons/${comparisonId}/highlights`, {
-        method: 'POST',
-        body: JSON.stringify(data),
+      return clientStorage.saveHighlight({
+        comparisonId: comparisonIdStr,
+        ...data
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comparisons', comparisonId, 'highlights'] });
+      queryClient.invalidateQueries({ queryKey: ['highlights', comparisonIdStr] });
       toast({
         title: 'Highlight saved',
         description: 'Your highlight has been saved.',
@@ -69,13 +67,11 @@ export function TextHighlighter({ content, comparisonId, formatContent }: TextHi
   });
 
   const deleteHighlightMutation = useMutation({
-    mutationFn: async (highlightId: number) => {
-      return apiRequest(`/api/highlights/${highlightId}`, {
-        method: 'DELETE',
-      });
+    mutationFn: async (highlightId: string) => {
+      return clientStorage.deleteHighlight(highlightId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comparisons', comparisonId, 'highlights'] });
+      queryClient.invalidateQueries({ queryKey: ['highlights', comparisonIdStr] });
       toast({
         title: 'Highlight removed',
         description: 'Your highlight has been removed.',
@@ -140,7 +136,7 @@ export function TextHighlighter({ content, comparisonId, formatContent }: TextHi
     window.getSelection()?.removeAllRanges();
   };
 
-  const handleDeleteHighlight = (highlightId: number) => {
+  const handleDeleteHighlight = (highlightId: string) => {
     deleteHighlightMutation.mutate(highlightId);
   };
 
@@ -181,8 +177,8 @@ export function TextHighlighter({ content, comparisonId, formatContent }: TextHi
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'MARK' && target.dataset.highlightId) {
-        const highlightId = parseInt(target.dataset.highlightId, 10);
-        if (!isNaN(highlightId)) {
+        const highlightId = target.dataset.highlightId;
+        if (highlightId) {
           handleDeleteHighlight(highlightId);
         }
       }
