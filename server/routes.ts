@@ -5,7 +5,7 @@ import { wikipediaService } from "./services/wikipedia";
 import { openaiService } from "./services/openai";
 import { openRouterService } from "./services/openrouter";
 import { exportService } from "./services/export";
-import { insertComparisonSchema, insertSearchSessionSchema } from "@shared/schema";
+import { insertComparisonSchema, insertSearchSessionSchema, insertHighlightSchema } from "@shared/schema";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { chatWithOpenAI } from './services/openaiChat';
@@ -643,6 +643,95 @@ The user is now asking about this analysis. Please provide helpful, conversation
     } catch (error) {
       console.error('OpenAI models proxy error:', error);
       res.status(500).json({ error: 'Failed to fetch models' });
+    }
+  });
+
+  // Highlights API endpoints
+  
+  // Get highlights for a comparison
+  app.get('/api/comparisons/:id/highlights', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const comparisonId = Number(id);
+      
+      if (isNaN(comparisonId)) {
+        return res.status(400).json({ error: 'Invalid comparison ID' });
+      }
+
+      const highlights = await storage.getHighlightsByComparisonId(comparisonId);
+      res.json(highlights);
+    } catch (error) {
+      console.error('Get highlights error:', error);
+      res.status(500).json({ error: 'Failed to fetch highlights' });
+    }
+  });
+
+  // Create a new highlight
+  app.post('/api/comparisons/:id/highlights', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const comparisonId = Number(id);
+      
+      if (isNaN(comparisonId)) {
+        return res.status(400).json({ error: 'Invalid comparison ID' });
+      }
+
+      const highlightData = {
+        comparisonId,
+        ...req.body
+      };
+
+      const validatedData = insertHighlightSchema.parse(highlightData);
+      const highlight = await storage.createHighlight(validatedData);
+      
+      res.status(201).json(highlight);
+    } catch (error) {
+      console.error('Create highlight error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Invalid highlight data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to create highlight' });
+    }
+  });
+
+  // Delete a highlight
+  app.delete('/api/highlights/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const highlightId = Number(id);
+      
+      if (isNaN(highlightId)) {
+        return res.status(400).json({ error: 'Invalid highlight ID' });
+      }
+
+      const deleted = await storage.deleteHighlight(highlightId);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: 'Highlight not found' });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete highlight error:', error);
+      res.status(500).json({ error: 'Failed to delete highlight' });
+    }
+  });
+
+  // Delete all highlights for a comparison
+  app.delete('/api/comparisons/:id/highlights', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const comparisonId = Number(id);
+      
+      if (isNaN(comparisonId)) {
+        return res.status(400).json({ error: 'Invalid comparison ID' });
+      }
+
+      await storage.deleteHighlightsByComparisonId(comparisonId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete all highlights error:', error);
+      res.status(500).json({ error: 'Failed to delete highlights' });
     }
   });
 

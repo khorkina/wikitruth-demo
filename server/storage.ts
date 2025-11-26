@@ -53,6 +53,7 @@ export class MemStorage implements IStorage {
       outputLanguage: insertComparison.outputLanguage,
       comparisonResult: insertComparison.comparisonResult || null,
       isFunnyMode: insertComparison.isFunnyMode || null,
+      isPremium: insertComparison.isPremium || null,
       createdAt: new Date()
     };
     this.comparisons.set(id, comparison);
