@@ -79,6 +79,20 @@ export function TextHighlighter({ content, comparisonId, formatContent }: TextHi
     },
   });
 
+  const getTextOffset = useCallback((container: Node, targetNode: Node, targetOffset: number): number => {
+    let offset = 0;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+    
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node === targetNode) {
+        return offset + targetOffset;
+      }
+      offset += node.textContent?.length || 0;
+    }
+    return offset;
+  }, []);
+
   const handleTextSelection = useCallback(() => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !contentRef.current) {
@@ -100,13 +114,19 @@ export function TextHighlighter({ content, comparisonId, formatContent }: TextHi
       return;
     }
 
-    const startOffset = content.indexOf(text);
-    if (startOffset === -1) {
+    const formattedContent = container.querySelector('.formatted-content');
+    if (!formattedContent) {
       setShowColorPicker(false);
       return;
     }
 
-    const endOffset = startOffset + text.length;
+    const startOffset = getTextOffset(formattedContent, range.startContainer, range.startOffset);
+    const endOffset = getTextOffset(formattedContent, range.endContainer, range.endOffset);
+
+    if (startOffset === endOffset) {
+      setShowColorPicker(false);
+      return;
+    }
 
     const rect = range.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
@@ -118,7 +138,7 @@ export function TextHighlighter({ content, comparisonId, formatContent }: TextHi
       y: rect.top - containerRect.top - 10,
     });
     setShowColorPicker(true);
-  }, [content]);
+  }, [getTextOffset]);
 
   const handleColorSelect = (color: string) => {
     if (!selectionRange || !selectedText) return;

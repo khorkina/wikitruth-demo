@@ -198,6 +198,7 @@ class ClientStorage {
 
   async deleteComparison(id: string): Promise<void> {
     if (!this.db) await this.init();
+    await this.deleteHighlightsByComparisonId(id);
     await this.db!.delete('comparisons', id);
   }
 
@@ -257,11 +258,12 @@ class ClientStorage {
   async clearAllData(): Promise<void> {
     if (!this.db) await this.init();
     
-    const tx = this.db!.transaction(['users', 'comparisons', 'sessions'], 'readwrite');
+    const tx = this.db!.transaction(['users', 'comparisons', 'sessions', 'highlights'], 'readwrite');
     await Promise.all([
       tx.objectStore('users').clear(),
       tx.objectStore('comparisons').clear(),
-      tx.objectStore('sessions').clear()
+      tx.objectStore('sessions').clear(),
+      tx.objectStore('highlights').clear()
     ]);
     
     localStorage.removeItem('wikiTruthUserId');
