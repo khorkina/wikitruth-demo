@@ -4,19 +4,19 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const messages = [
   {
-    title: "Wikipedia still can't be sold.",
-    subtitle: "An important update for readers.",
-    text: "Today is the day. We're sorry to interrupt, but this message will be up for only a few hours."
+    title: "WikiTruth needs your support.",
+    subtitle: "Help us uncover global perspectives.",
+    text: "We're an independent, privacy-first tool comparing Wikipedia across languages. No ads, no tracking - just honest analysis powered by your support."
   },
   {
-    title: "Knowledge belongs to everyone.",
-    subtitle: "Help us keep it free.",
-    text: "Wiki Truth is a free, privacy-first platform. We don't sell ads or track you. Instead, we rely on supporters like you."
+    title: "See how stories differ worldwide.",
+    subtitle: "Help us keep this free.",
+    text: "WikiTruth reveals how the same topic is written differently in every language. Your donation helps us maintain this unique cross-cultural tool."
   },
   {
-    title: "Support independent research.",
-    subtitle: "Your donation makes a difference.",
-    text: "Your contribution helps us keep the service running and improve it for everyone."
+    title: "Privacy-first. Always free.",
+    subtitle: "Your support makes it possible.",
+    text: "Unlike most services, we never track you or sell your data. Your contribution keeps WikiTruth running and accessible to everyone."
   }
 ];
 

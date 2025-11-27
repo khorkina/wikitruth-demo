@@ -16,7 +16,7 @@ export default function MainPage() {
       {/* Hero Section */}
       <section className="text-center space-y-8">
         <div className="space-y-4">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
             Wiki Truth
           </h1>
           <p className="text-lg md:text-xl text-wiki-gray max-w-4xl mx-auto leading-relaxed">

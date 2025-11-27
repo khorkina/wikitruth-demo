@@ -14,35 +14,35 @@ export default function ComparePage() {
 
         <div className="space-y-6">
           {/* Step-by-step Guide */}
-          <div className="bg-gray-50 border border-gray-200 rounded p-6">
-            <h2 className="font-semibold text-lg mb-4">How to Compare Articles</h2>
+          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-6">
+            <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">How to Compare Articles</h2>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="bg-wiki-blue text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
+                <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
                 <div>
-                  <h3 className="font-medium">Search for an Article</h3>
-                  <p className="text-sm text-wiki-gray">Find any Wikipedia topic in your preferred language</p>
+                  <h3 className="font-medium text-gray-900 dark:text-white">Search for an Article</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Find any Wikipedia topic in your preferred language</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="bg-wiki-blue text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
+                <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
                 <div>
-                  <h3 className="font-medium">Select Languages</h3>
-                  <p className="text-sm text-wiki-gray">Choose 2-5 language versions to compare</p>
+                  <h3 className="font-medium text-gray-900 dark:text-white">Select Languages</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Choose 2-5 language versions to compare</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="bg-wiki-blue text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
+                <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
                 <div>
-                  <h3 className="font-medium">Choose Analysis Mode</h3>
-                  <p className="text-sm text-wiki-gray">Academic analysis or fun mode for entertaining insights</p>
+                  <h3 className="font-medium text-gray-900 dark:text-white">Choose Analysis Mode</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Academic analysis or fun mode for entertaining insights</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="bg-wiki-blue text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</div>
+                <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</div>
                 <div>
-                  <h3 className="font-medium">Review Results</h3>
-                  <p className="text-sm text-wiki-gray">Get AI-powered analysis of cultural differences and perspectives</p>
+                  <h3 className="font-medium text-gray-900 dark:text-white">Review Results</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Get AI-powered analysis of cultural differences and perspectives</p>
                 </div>
               </div>
             </div>
@@ -61,19 +61,19 @@ export default function ComparePage() {
 
           {/* Features Reminder */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-            <div className="bg-green-50 border border-green-200 rounded p-4">
-              <h3 className="font-semibold text-green-900 mb-2">
+            <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded p-4">
+              <h3 className="font-semibold text-green-900 dark:text-green-200 mb-2">
                 <i className="fas fa-check-circle mr-2"></i>Completely Free
               </h3>
-              <p className="text-sm text-green-800">
+              <p className="text-sm text-green-800 dark:text-green-300">
                 Unlimited comparisons with no account required
               </p>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded p-4">
-              <h3 className="font-semibold text-blue-900 mb-2">
+            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-4">
+              <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">
                 <i className="fas fa-shield-alt mr-2"></i>Privacy First
               </h3>
-              <p className="text-sm text-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
                 All data stored locally in your browser
               </p>
             </div>
