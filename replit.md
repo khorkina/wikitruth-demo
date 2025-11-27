@@ -24,6 +24,9 @@ Preferred communication style: Simple, everyday language.
 - **Loading States**: Skeleton loading and progress indicators.
 - **Premium Indicators**: Green premium badges and crown icons for visual premium status.
 - **Social Sharing**: Round circular buttons with platform labels and unique designs.
+- **Dark Mode**: Toggle between light and dark themes with localStorage persistence.
+- **Donation Banner**: Wikipedia-style carousel banner with Ko-Fi donation link (no branding visible).
+- **Suggest Improvement**: Footer button linking to email form (worldtruthfoundation@gmail.com).
 
 ### Technical Implementations
 - **Frontend**: React 18 with TypeScript, Wouter for routing, TanStack Query for server state, Vite as build tool.
