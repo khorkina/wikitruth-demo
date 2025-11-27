@@ -7,12 +7,14 @@ export function ThemeToggle() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('wiki-truth-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    // Default to light theme - only use dark if explicitly saved as dark
+    const shouldBeDark = savedTheme === 'dark';
     
     setIsDark(shouldBeDark);
     if (shouldBeDark) {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 

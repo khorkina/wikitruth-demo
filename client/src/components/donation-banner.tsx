@@ -24,25 +24,21 @@ export function DonationBanner() {
   const [location] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [currentMessage, setCurrentMessage] = useState(0);
-  const [isDismissedForSession, setIsDismissedForSession] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    const dismissed = sessionStorage.getItem('wiki-truth-banner-dismissed');
-    if (dismissed) {
-      setIsDismissedForSession(true);
-    }
-    
-    if (location === '/' && !dismissed) {
+    // Show banner on main page on every page load/refresh
+    if (location === '/' && !isDismissed) {
       setIsVisible(true);
     } else {
       setIsVisible(false);
     }
-  }, [location]);
+  }, [location, isDismissed]);
 
   const handleDismiss = () => {
     setIsVisible(false);
-    setIsDismissedForSession(true);
-    sessionStorage.setItem('wiki-truth-banner-dismissed', 'true');
+    setIsDismissed(true);
+    // Only persist within session navigation, but not on full page refresh
   };
 
   const handleAlreadyDonated = () => {
@@ -57,7 +53,7 @@ export function DonationBanner() {
     setCurrentMessage((prev) => (prev - 1 + messages.length) % messages.length);
   };
 
-  if (!isVisible || isDismissedForSession) {
+  if (!isVisible || isDismissed) {
     return null;
   }
 
