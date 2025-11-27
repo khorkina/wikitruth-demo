@@ -161,36 +161,112 @@ export function TextHighlighter({ content, comparisonId, formatContent }: TextHi
   };
 
   const renderContentWithHighlights = () => {
-    if (!highlights || highlights.length === 0) {
-      return formatContent(content);
-    }
-
-    const sortedHighlights = [...highlights].sort((a, b) => a.startOffset - b.startOffset);
+    // First, format the content to HTML
+    const formattedHtml = formatContent(content);
     
-    let result = '';
-    let lastIndex = 0;
+    if (!highlights || highlights.length === 0) {
+      return formattedHtml;
+    }
 
+    // Create a temporary element to work with the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = formattedHtml;
+    
+    // Get the plain text from the formatted HTML
+    const plainText = tempDiv.textContent || '';
+    
+    // Sort highlights by start offset (descending) to apply from end to start
+    // This prevents offset shifts when inserting highlight marks
+    const sortedHighlights = [...highlights].sort((a, b) => b.startOffset - a.startOffset);
+    
     for (const highlight of sortedHighlights) {
-      if (highlight.startOffset >= content.length) continue;
+      if (highlight.startOffset >= plainText.length) continue;
       
-      const actualEnd = Math.min(highlight.endOffset, content.length);
+      const actualEnd = Math.min(highlight.endOffset, plainText.length);
+      const highlightedText = plainText.substring(highlight.startOffset, actualEnd);
       
-      if (highlight.startOffset > lastIndex) {
-        result += content.substring(lastIndex, highlight.startOffset);
+      if (!highlightedText.trim()) continue;
+      
+      // Find and wrap the text in the DOM
+      applyHighlightToDOM(tempDiv, highlight.startOffset, actualEnd, highlight.color, highlight.id);
+    }
+    
+    return tempDiv.innerHTML;
+  };
+  
+  // Helper function to apply highlight to DOM based on text offsets
+  const applyHighlightToDOM = (container: HTMLElement, startOffset: number, endOffset: number, color: string, highlightId: string) => {
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+    let currentOffset = 0;
+    let startNode: Text | null = null;
+    let startNodeOffset = 0;
+    let endNode: Text | null = null;
+    let endNodeOffset = 0;
+    
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      const nodeLength = node.textContent?.length || 0;
+      
+      // Find start node
+      if (!startNode && currentOffset + nodeLength > startOffset) {
+        startNode = node;
+        startNodeOffset = startOffset - currentOffset;
       }
-
-      const highlightedText = content.substring(highlight.startOffset, actualEnd);
-      const colorClass = getColorBg(highlight.color);
-      result += `<mark class="${colorClass} px-0.5 rounded cursor-pointer" data-highlight-id="${highlight.id}" title="Click to remove">${highlightedText}</mark>`;
       
-      lastIndex = actualEnd;
+      // Find end node
+      if (currentOffset + nodeLength >= endOffset) {
+        endNode = node;
+        endNodeOffset = endOffset - currentOffset;
+        break;
+      }
+      
+      currentOffset += nodeLength;
     }
-
-    if (lastIndex < content.length) {
-      result += content.substring(lastIndex);
+    
+    if (!startNode || !endNode) return;
+    
+    const colorClass = getColorBg(color);
+    
+    try {
+      // If start and end are in the same text node
+      if (startNode === endNode) {
+        const text = startNode.textContent || '';
+        const before = text.substring(0, startNodeOffset);
+        const highlighted = text.substring(startNodeOffset, endNodeOffset);
+        const after = text.substring(endNodeOffset);
+        
+        const fragment = document.createDocumentFragment();
+        if (before) fragment.appendChild(document.createTextNode(before));
+        
+        const mark = document.createElement('mark');
+        mark.className = `${colorClass} px-0.5 rounded cursor-pointer`;
+        mark.setAttribute('data-highlight-id', highlightId);
+        mark.setAttribute('title', 'Click to remove');
+        mark.textContent = highlighted;
+        fragment.appendChild(mark);
+        
+        if (after) fragment.appendChild(document.createTextNode(after));
+        
+        startNode.parentNode?.replaceChild(fragment, startNode);
+      } else {
+        // For multi-node selections, just highlight the excerpt text if found
+        const fullText = container.innerHTML;
+        const excerpt = (container.textContent || '').substring(startOffset, endOffset);
+        if (excerpt) {
+          // Escape special regex characters in the excerpt
+          const escapedExcerpt = excerpt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(?<!<[^>]*)${escapedExcerpt}(?![^<]*>)`, 'g');
+          let matched = false;
+          container.innerHTML = fullText.replace(regex, (match) => {
+            if (matched) return match; // Only highlight first occurrence
+            matched = true;
+            return `<mark class="${colorClass} px-0.5 rounded cursor-pointer" data-highlight-id="${highlightId}" title="Click to remove">${match}</mark>`;
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error applying highlight:', e);
     }
-
-    return formatContent(result);
   };
 
   useEffect(() => {
