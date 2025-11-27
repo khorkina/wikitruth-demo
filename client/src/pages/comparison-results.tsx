@@ -40,16 +40,16 @@ function formatMarkdownContent(content: string) {
       
       switch (level) {
         case 1:
-          result.push(`<h1 class="text-2xl font-bold mb-6 mt-0 text-blue-800 border-b-2 border-blue-600 pb-3">${text}</h1>`);
+          result.push(`<h1 class="text-2xl font-bold mb-6 mt-0 text-foreground border-b border-border pb-3">${formatInlineMarkdown(text)}</h1>`);
           break;
         case 2:
-          result.push(`<h2 class="text-xl font-semibold mb-3 text-blue-800 mt-8 border-b border-gray-300 pb-2">${text}</h2>`);
+          result.push(`<h2 class="text-xl font-semibold mb-3 text-foreground mt-8 border-b border-border/50 pb-2">${formatInlineMarkdown(text)}</h2>`);
           break;
         case 3:
-          result.push(`<h3 class="text-lg font-semibold mb-2 text-blue-800 mt-6">${text}</h3>`);
+          result.push(`<h3 class="text-lg font-semibold mb-2 text-foreground mt-6">${formatInlineMarkdown(text)}</h3>`);
           break;
         case 4:
-          result.push(`<h4 class="text-base font-semibold mb-2 text-blue-800 mt-4">${text}</h4>`);
+          result.push(`<h4 class="text-base font-semibold mb-2 text-foreground mt-4">${formatInlineMarkdown(text)}</h4>`);
           break;
       }
       continue;
@@ -58,22 +58,22 @@ function formatMarkdownContent(content: string) {
     // Handle bullet points
     if (line.match(/^[\s]*[-*+]\s+/)) {
       if (!inList) {
-        result.push('<ul class="list-disc pl-6 mb-4 space-y-1">');
+        result.push('<ul class="list-disc pl-6 mb-4 space-y-2">');
         inList = true;
       }
       const text = line.replace(/^[\s]*[-*+]\s+/, '').trim();
-      result.push(`<li class="leading-relaxed text-gray-800">${formatInlineMarkdown(text)}</li>`);
+      result.push(`<li class="leading-relaxed text-foreground/90">${formatInlineMarkdown(text)}</li>`);
       continue;
     }
     
     // Handle numbered lists
     if (line.match(/^[\s]*\d+\.\s+/)) {
       if (!inList) {
-        result.push('<ol class="list-decimal pl-6 mb-4 space-y-1">');
+        result.push('<ol class="list-decimal pl-6 mb-4 space-y-2">');
         inList = true;
       }
       const text = line.replace(/^[\s]*\d+\.\s+/, '').trim();
-      result.push(`<li class="leading-relaxed text-gray-800">${formatInlineMarkdown(text)}</li>`);
+      result.push(`<li class="leading-relaxed text-foreground/90">${formatInlineMarkdown(text)}</li>`);
       continue;
     }
     
@@ -93,7 +93,7 @@ function formatMarkdownContent(content: string) {
     
     // Handle regular paragraphs
     if (!inList) {
-      result.push(`<p class="mb-4 leading-relaxed text-gray-800">${formatInlineMarkdown(line)}</p>`);
+      result.push(`<p class="mb-4 leading-relaxed text-foreground/90">${formatInlineMarkdown(line)}</p>`);
     }
   }
   
@@ -108,10 +108,10 @@ function formatMarkdownContent(content: string) {
 // Helper function for inline markdown (bold, italic, etc.)
 function formatInlineMarkdown(text: string): string {
   return text
-    // Replace **bold** text with proper HTML
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-blue-800">$1</strong>')
+    // Replace **bold** text with proper HTML - using primary color for emphasis
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-foreground">$1</strong>')
     // Replace *italic* text with proper HTML (but not bullet points)
-    .replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em class="italic text-gray-700">$1</em>')
+    .replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em class="italic text-muted-foreground">$1</em>')
     // Clean up any remaining stray markdown symbols and problematic formatting
     .replace(/#{5,}/g, '')
     .replace(/^\s*[#]+\s*$/g, '')

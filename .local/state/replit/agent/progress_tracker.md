@@ -11,3 +11,4 @@
 [x] 11. Updated chat button to bright green color with bounce animation
 [x] 12. Added OpenAI API key secret (OPENAI_API_KEY)
 [x] 13. Fixed premium comparison options (outputFormat, focusPoints, formality, analysisMode) to apply to AI analysis
+[x] 14. Fixed text highlighting styles to use semantic colors that work in light and dark mode
