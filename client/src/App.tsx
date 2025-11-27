@@ -74,7 +74,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-background">
           <DonationBanner />
           <ResponsiveNav />
           

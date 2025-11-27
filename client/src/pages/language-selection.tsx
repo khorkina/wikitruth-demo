@@ -35,6 +35,7 @@ export default function LanguageSelection() {
     setOutputLanguage(getUserLanguage());
   }, []);
   const [showPremiumOptions, setShowPremiumOptions] = useState(false);
+  const [initialAnalysisMode, setInitialAnalysisMode] = useState<'academic' | 'biography' | 'funny'>('academic');
 
   // Fetch available language links
   const languageLinksQuery = useQuery({
@@ -138,6 +139,9 @@ export default function LanguageSelection() {
       return;
     }
 
+    // Set the initial analysis mode based on which button was clicked
+    setInitialAnalysisMode(isFunnyMode ? 'funny' : 'academic');
+    
     // All users can configure premium comparison settings
     setShowPremiumOptions(true);
     toast({
@@ -239,6 +243,7 @@ export default function LanguageSelection() {
           outputLanguage={outputLanguage}
           onStartComparison={handlePremiumComparisonStart}
           onBack={() => setShowPremiumOptions(false)}
+          initialAnalysisMode={initialAnalysisMode}
         />
       </main>
     );

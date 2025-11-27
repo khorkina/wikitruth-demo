@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Menu, X, Search, History, HelpCircle, Info, Settings } from 'lucide-react';
 import { SettingsDialog } from './settings-dialog';
+import { ThemeToggle } from './theme-toggle';
 
 interface NavItem {
   href: string;
@@ -57,23 +58,24 @@ export function ResponsiveNav() {
       {isMobile && (
         <>
           {/* Mobile Header */}
-          <header className="fixed top-0 left-0 right-0 bg-white border-b border-wiki-light-border z-30 px-4 py-3">
+          <header className="fixed top-0 left-0 right-0 bg-background border-b border-border z-30 px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <button
                   onClick={toggleMobileMenu}
-                  className="p-2 hover:bg-wiki-light-gray rounded-lg transition-colors"
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
                   aria-label="Toggle menu"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
                 <h1 className="text-xl font-bold">
-                  <Link href="/" className="text-black hover:text-wiki-blue">
+                  <Link href="/" className="text-foreground hover:text-primary">
                     Wiki Truth
                   </Link>
                 </h1>
               </div>
               <div className="flex items-center gap-2">
+                <ThemeToggle />
                 <SettingsDialog />
               </div>
             </div>
@@ -86,12 +88,12 @@ export function ResponsiveNav() {
 
           {/* Mobile Menu Panel */}
           <nav className={`mobile-nav-panel ${isMobileMenuOpen ? 'open' : 'closed'}`}>
-            <div className="p-4 border-b border-wiki-light-border">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Navigation</h2>
+                <h2 className="text-lg font-semibold text-foreground">Navigation</h2>
                 <button
                   onClick={toggleMobileMenu}
-                  className="p-2 hover:bg-wiki-light-gray rounded-lg transition-colors"
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
                   aria-label="Close menu"
                 >
                   <X className="w-5 h-5" />
@@ -102,7 +104,7 @@ export function ResponsiveNav() {
             <div className="p-4 space-y-6">
               {Object.entries(groupedItems).map(([section, items]) => (
                 <div key={section}>
-                  <h3 className="text-sm font-medium text-wiki-gray mb-3">{section}</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">{section}</h3>
                   <div className="space-y-1">
                     {items.map(item => (
                       <Link
@@ -175,15 +177,15 @@ export function ResponsiveNav() {
       {!isMobile && (
         <>
           {/* Desktop Header */}
-          <header className="fixed top-0 left-0 right-0 bg-white border-b border-wiki-light-border z-30 px-6 py-4">
+          <header className="fixed top-0 left-0 right-0 bg-background border-b border-border z-30 px-6 py-4">
             <div className="flex items-center justify-between max-w-7xl mx-auto">
               <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-bold">
-                  <Link href="/" className="text-black hover:text-wiki-blue">
+                  <Link href="/" className="text-foreground hover:text-primary">
                     Wiki Truth
                   </Link>
                 </h1>
-                <span className="text-sm text-wiki-gray">Privacy-first comparison</span>
+                <span className="text-sm text-muted-foreground">Privacy-first comparison</span>
               </div>
               <div className="flex items-center gap-6">
                 <nav className="flex items-center gap-6">
@@ -193,6 +195,7 @@ export function ResponsiveNav() {
                   <Link href="/about" className="wiki-link text-sm">About</Link>
                 </nav>
                 <div className="flex items-center gap-3">
+                  <ThemeToggle />
                   <SettingsDialog />
                 </div>
               </div>

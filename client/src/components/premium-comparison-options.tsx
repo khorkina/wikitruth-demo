@@ -15,6 +15,7 @@ interface PremiumComparisonOptionsProps {
   outputLanguage: string;
   onStartComparison: (options: ComparisonOptions) => void;
   onBack: () => void;
+  initialAnalysisMode?: 'academic' | 'biography' | 'funny';
 }
 
 export interface ComparisonOptions {
@@ -30,14 +31,15 @@ export function PremiumComparisonOptions({
   articleTitle, 
   outputLanguage, 
   onStartComparison, 
-  onBack 
+  onBack,
+  initialAnalysisMode = 'academic'
 }: PremiumComparisonOptionsProps) {
   const [options, setOptions] = useState<ComparisonOptions>({
     outputFormat: 'narrative',
     focusPoints: '',
-    formality: 'formal',
+    formality: initialAnalysisMode === 'funny' ? 'casual' : 'formal',
     aiModel: 'premium',
-    analysisMode: 'academic'
+    analysisMode: initialAnalysisMode
   });
 
   const handleStartComparison = () => {

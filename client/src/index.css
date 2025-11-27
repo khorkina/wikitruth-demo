@@ -215,7 +215,7 @@
   }
   
   .mobile-nav-panel {
-    @apply fixed left-0 top-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-200 lg:hidden;
+    @apply fixed left-0 top-0 h-full w-80 bg-background shadow-xl z-50 transform transition-transform duration-200 lg:hidden;
   }
   
   .mobile-nav-panel.closed {
@@ -227,7 +227,7 @@
   }
   
   .mobile-search-bar {
-    @apply fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30 px-4 py-3 lg:static lg:border-none lg:p-0;
+    @apply fixed top-0 left-0 right-0 bg-background border-b border-border z-30 px-4 py-3 lg:static lg:border-none lg:p-0;
   }
   
   .mobile-fab {
@@ -239,11 +239,11 @@
   }
   
   .mobile-bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 px-4 py-2 lg:hidden;
+    @apply fixed bottom-0 left-0 right-0 bg-background border-t border-border z-30 px-4 py-2 lg:hidden;
   }
   
   .desktop-sidebar {
-    @apply hidden lg:block fixed left-0 top-0 h-full w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto;
+    @apply hidden lg:block fixed left-0 top-0 h-full w-64 bg-muted border-r border-border overflow-y-auto;
   }
   
   .desktop-content {
