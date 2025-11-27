@@ -5,21 +5,31 @@ const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
+export interface PremiumOptions {
+  outputFormat: 'bullet-points' | 'narrative';
+  focusPoints: string;
+  formality: 'formal' | 'casual' | 'academic';
+  aiModel: 'free' | 'premium';
+  analysisMode: 'academic' | 'biography' | 'funny';
+}
+
 export interface ComparisonRequest {
   articles: Record<string, string>; // language code -> article content
   outputLanguage: string;
   isFunnyMode?: boolean;
+  premiumOptions?: PremiumOptions | null;
 }
 
 export class OpenAIService {
   async compareArticles(request: ComparisonRequest): Promise<string> {
-    const { articles, outputLanguage, isFunnyMode = false } = request;
+    const { articles, outputLanguage, isFunnyMode = false, premiumOptions } = request;
     
     // Log the articles being compared for debugging
     console.log('Articles being compared:', Object.keys(articles));
     console.log('Article lengths (full - no truncation):', Object.entries(articles).map(([lang, content]) => 
       `${lang}: ${content.length} characters`
     ));
+    console.log('Premium options received:', premiumOptions);
     
     try {
       if (!openai) {
@@ -33,27 +43,24 @@ export class OpenAIService {
         articlesFormatted += `\n\n=== ARTICLE IN ${lang.toUpperCase()} (${content.length} characters) ===\n\n${content}\n`;
       }
 
-      const systemPrompt = isFunnyMode 
-        ? this.getFunnyModeSystemPrompt(outputLanguage)
-        : this.getStandardSystemPrompt(outputLanguage);
+      // Determine analysis mode from premiumOptions or isFunnyMode
+      const analysisMode = premiumOptions?.analysisMode || (isFunnyMode ? 'funny' : 'academic');
+      const outputFormat = premiumOptions?.outputFormat || 'narrative';
+      const formality = premiumOptions?.formality || 'formal';
+      const focusPoints = premiumOptions?.focusPoints || '';
 
-      const userPrompt = `Please analyze and compare these COMPLETE Wikipedia articles about the same topic across different languages. Write your ENTIRE response in ${outputLanguage} language only.
+      // Get appropriate system prompt based on analysis mode
+      const systemPrompt = this.getSystemPrompt(outputLanguage, analysisMode, formality);
 
-${articlesFormatted}
-
-Please provide a comprehensive comparison focusing on:
-1. Factual differences and variations in information
-2. Cultural perspectives and framing differences
-3. Narrative emphasis and tone variations
-4. Structural and organizational differences
-5. Missing or additional information in each version
-
-${isFunnyMode 
-  ? 'Make this comparison humorous, sarcastic, and entertaining while still being informative. Point out absurd differences and cultural quirks in a witty way.'
-  : 'Provide a scholarly, detailed analysis that would be suitable for academic or research purposes.'
-}
-
-IMPORTANT: Write your response ONLY in ${outputLanguage}. Do not use any other language.`;
+      // Build user prompt with all premium options
+      const userPrompt = this.buildUserPrompt(
+        articlesFormatted, 
+        outputLanguage, 
+        analysisMode, 
+        outputFormat, 
+        formality, 
+        focusPoints
+      );
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -91,32 +98,17 @@ IMPORTANT: Write your response ONLY in ${outputLanguage}. Do not use any other l
     }
   }
 
-  private getStandardSystemPrompt(outputLanguage: string): string {
-    return `You are an expert comparative linguist and cultural analyst specializing in Wikipedia content analysis. Your task is to provide detailed, scholarly comparisons of the same Wikipedia article across different languages.
+  private getSystemPrompt(outputLanguage: string, analysisMode: string, formality: string): string {
+    const formalityDescriptions: Record<string, string> = {
+      'academic': 'highly formal, scholarly, and research-oriented with citations-style references',
+      'formal': 'professional, structured, and well-organized',
+      'casual': 'conversational, friendly, and approachable while still informative'
+    };
 
-CRITICAL REQUIREMENT: You MUST write your entire response in ${outputLanguage} and ONLY in ${outputLanguage}. Do not use any other language regardless of the content of the input articles.
+    const formalityStyle = formalityDescriptions[formality] || formalityDescriptions['formal'];
 
-Your analysis should be:
-- Objective and academically rigorous
-- Focused on factual differences, cultural perspectives, and narrative variations
-- Well-structured with clear sections
-- Written EXCLUSIVELY in ${outputLanguage} (never mix languages)
-- Comprehensive and detailed
-
-Identify specific examples where different language versions:
-- Present different facts or emphasis
-- Reflect cultural biases or perspectives  
-- Use different organizational structures
-- Include or exclude certain information
-- Frame topics differently
-
-When quoting text from articles in other languages, always translate the quotes to ${outputLanguage} and indicate the original language in parentheses.
-
-REMINDER: Your entire response must be in ${outputLanguage} only.`;
-  }
-
-  private getFunnyModeSystemPrompt(outputLanguage: string): string {
-    return `You are a witty, sarcastic cultural commentator with a PhD in "Wikipedia Weirdness Studies." Your job is to hilariously roast the differences between Wikipedia articles across languages while still being informative.
+    if (analysisMode === 'funny') {
+      return `You are a witty, sarcastic cultural commentator with a PhD in "Wikipedia Weirdness Studies." Your job is to hilariously roast the differences between Wikipedia articles across languages while still being informative.
 
 CRITICAL REQUIREMENT: You MUST write your entire response in ${outputLanguage} and ONLY in ${outputLanguage}. Do not use any other language regardless of the content of the input articles.
 
@@ -138,9 +130,116 @@ When referencing text from articles in other languages, always translate it to $
 Use humor, pop culture references, and witty observations while still providing genuine insights into cultural differences.
 
 REMINDER: Your entire response must be in ${outputLanguage} only.`;
+    }
+
+    if (analysisMode === 'biography') {
+      return `You are an expert biographer and cultural analyst specializing in how different cultures portray historical and contemporary figures. Your task is to compare biographical Wikipedia articles across different languages with a focus on personal narratives.
+
+CRITICAL REQUIREMENT: You MUST write your entire response in ${outputLanguage} and ONLY in ${outputLanguage}. Do not use any other language regardless of the content of the input articles.
+
+Writing style: ${formalityStyle}
+
+Your analysis should focus on:
+- How the person's life story is told differently across cultures
+- Variations in the emphasis on achievements, controversies, and personal life
+- Cultural perspectives on the person's significance and legacy
+- Different interpretations of key life events
+- How nationalistic or cultural pride influences the portrayal
+- Personal details included or omitted in different versions
+
+When quoting text from articles in other languages, always translate the quotes to ${outputLanguage} and indicate the original language in parentheses.
+
+REMINDER: Your entire response must be in ${outputLanguage} only.`;
+    }
+
+    // Default: academic mode
+    return `You are an expert comparative linguist and cultural analyst specializing in Wikipedia content analysis. Your task is to provide detailed, scholarly comparisons of the same Wikipedia article across different languages.
+
+CRITICAL REQUIREMENT: You MUST write your entire response in ${outputLanguage} and ONLY in ${outputLanguage}. Do not use any other language regardless of the content of the input articles.
+
+Writing style: ${formalityStyle}
+
+Your analysis should be:
+- Objective and academically rigorous
+- Focused on factual differences, cultural perspectives, and narrative variations
+- Well-structured with clear sections
+- Written EXCLUSIVELY in ${outputLanguage} (never mix languages)
+- Comprehensive and detailed
+
+Identify specific examples where different language versions:
+- Present different facts or emphasis
+- Reflect cultural biases or perspectives  
+- Use different organizational structures
+- Include or exclude certain information
+- Frame topics differently
+
+When quoting text from articles in other languages, always translate the quotes to ${outputLanguage} and indicate the original language in parentheses.
+
+REMINDER: Your entire response must be in ${outputLanguage} only.`;
+  }
+
+  private buildUserPrompt(
+    articlesFormatted: string, 
+    outputLanguage: string, 
+    analysisMode: string, 
+    outputFormat: string, 
+    formality: string, 
+    focusPoints: string
+  ): string {
+    // Format instruction based on outputFormat
+    const formatInstruction = outputFormat === 'bullet-points' 
+      ? `FORMAT YOUR RESPONSE AS STRUCTURED BULLET POINTS:
+- Use clear hierarchical bullet points for each major finding
+- Group related differences under section headers
+- Use sub-bullets for specific examples and details
+- Make each bullet point concise but informative`
+      : `FORMAT YOUR RESPONSE AS A FLOWING NARRATIVE:
+- Write in well-structured paragraphs
+- Use natural transitions between topics
+- Create a cohesive essay-style analysis
+- Include section headers to organize content`;
+
+    // Formality instruction
+    const formalityInstruction: Record<string, string> = {
+      'academic': 'Use scholarly language, cite specific passages, and maintain a research paper tone.',
+      'formal': 'Write professionally with clear structure and balanced analysis.',
+      'casual': 'Write in a friendly, accessible way as if explaining to an interested friend.'
+    };
+
+    // Analysis mode specific instructions
+    let modeInstruction = '';
+    if (analysisMode === 'funny') {
+      modeInstruction = 'Make this comparison humorous, sarcastic, and entertaining while still being informative. Point out absurd differences and cultural quirks in a witty way.';
+    } else if (analysisMode === 'biography') {
+      modeInstruction = 'Focus on how the person is portrayed differently, including their achievements, controversies, personal life, and cultural significance in each version.';
+    } else {
+      modeInstruction = 'Provide a scholarly, detailed analysis focusing on factual accuracy, cultural perspectives, and narrative differences.';
+    }
+
+    // Focus points instruction
+    const focusInstruction = focusPoints && focusPoints.trim() 
+      ? `\n\nUSER'S SPECIFIC FOCUS REQUEST:\nPay special attention to the following aspects as requested by the user:\n"${focusPoints.trim()}"\nMake sure to address these specific points in your analysis.`
+      : '';
+
+    return `Please analyze and compare these COMPLETE Wikipedia articles about the same topic across different languages. Write your ENTIRE response in ${outputLanguage} language only.
+
+${articlesFormatted}
+
+${formatInstruction}
+
+${formalityInstruction[formality] || formalityInstruction['formal']}
+
+Please provide a comprehensive comparison focusing on:
+1. Factual differences and variations in information
+2. Cultural perspectives and framing differences
+3. Narrative emphasis and tone variations
+4. Structural and organizational differences
+5. Missing or additional information in each version
+
+${modeInstruction}${focusInstruction}
+
+IMPORTANT: Write your response ONLY in ${outputLanguage}. Do not use any other language.`;
   }
 }
-
-
 
 export const openaiService = new OpenAIService();

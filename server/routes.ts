@@ -257,7 +257,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         baseLanguage = 'en',
         isFunnyMode = false,
         isPremium = false,
-        articles = null // Client can provide pre-fetched articles
+        articles = null, // Client can provide pre-fetched articles
+        premiumOptions = null // Premium analysis options (outputFormat, focusPoints, formality, analysisMode)
       } = req.body;
 
       if (!articleTitle || !selectedLanguages || !outputLanguage) {
@@ -313,10 +314,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // All users get OpenAI analysis
       console.log('Using OpenAI for article comparison analysis');
+      console.log('Premium options:', premiumOptions);
       const comparisonResult = await openaiService.compareArticles({
         articles: articleData,
         outputLanguage,
-        isFunnyMode
+        isFunnyMode,
+        premiumOptions
       });
 
       // Save comparison to storage

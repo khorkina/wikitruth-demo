@@ -184,7 +184,8 @@ export const api = {
             baseLanguage: comparisonData.baseLanguage || 'en',
             isFunnyMode: comparisonData.isFunnyMode,
             isPremium: comparisonData.isPremium,
-            articles: articleContents
+            articles: articleContents,
+            premiumOptions: comparisonData.premiumOptions
           })
         });
 
