@@ -10,3 +10,4 @@
 [x] 10. Removed AI Model selection section from premium comparison options
 [x] 11. Updated chat button to bright green color with bounce animation
 [x] 12. Added OpenAI API key secret (OPENAI_API_KEY)
+[x] 13. Fixed premium comparison options (outputFormat, focusPoints, formality, analysisMode) to apply to AI analysis
