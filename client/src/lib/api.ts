@@ -168,6 +168,7 @@ export const api = {
 
       console.log('Sending to AI service for comparison...');
       console.log('Article content lengths:', Object.entries(articleContents).map(([lang, content]) => `${lang}: ${content.length} chars`));
+      console.log('Premium options being sent:', comparisonData.premiumOptions);
       
       // Send to server for AI comparison (routes between OpenRouter/OpenAI based on subscription)
       let comparisonResult;
