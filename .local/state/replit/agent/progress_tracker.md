@@ -9,4 +9,4 @@
 [x] 9. Added Wikipedia-style donation banner with Ko-fi integration (ko-fi.com/wikitruth)
 [x] 10. Removed AI Model selection section from premium comparison options
 [x] 11. Updated chat button to bright green color with bounce animation
-[x] 12. Completed migration to Replit environment - all packages installed and workflow running successfully
+[x] 12. Added OpenAI API key secret (OPENAI_API_KEY)
