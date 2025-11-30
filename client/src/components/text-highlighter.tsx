@@ -12,16 +12,16 @@ interface TextHighlighterProps {
 }
 
 const HIGHLIGHT_COLORS = [
-  { name: 'yellow', bg: 'bg-yellow-200 dark:bg-yellow-900/50', class: 'rgba(254, 240, 138, 0.7)' },
-  { name: 'green', bg: 'bg-green-200 dark:bg-green-900/50', class: 'rgba(187, 247, 208, 0.7)' },
-  { name: 'blue', bg: 'bg-blue-200 dark:bg-blue-900/50', class: 'rgba(191, 219, 254, 0.7)' },
-  { name: 'pink', bg: 'bg-pink-200 dark:bg-pink-900/50', class: 'rgba(251, 207, 232, 0.7)' },
-  { name: 'orange', bg: 'bg-orange-200 dark:bg-orange-900/50', class: 'rgba(254, 215, 170, 0.7)' },
+  { name: 'yellow', bg: 'bg-yellow-200 dark:bg-yellow-900/50 text-gray-900 dark:text-yellow-100', class: 'rgba(254, 240, 138, 0.7)' },
+  { name: 'green', bg: 'bg-green-200 dark:bg-green-900/50 text-gray-900 dark:text-green-100', class: 'rgba(187, 247, 208, 0.7)' },
+  { name: 'blue', bg: 'bg-blue-200 dark:bg-blue-900/50 text-gray-900 dark:text-blue-100', class: 'rgba(191, 219, 254, 0.7)' },
+  { name: 'pink', bg: 'bg-pink-200 dark:bg-pink-900/50 text-gray-900 dark:text-pink-100', class: 'rgba(251, 207, 232, 0.7)' },
+  { name: 'orange', bg: 'bg-orange-200 dark:bg-orange-900/50 text-gray-900 dark:text-orange-100', class: 'rgba(254, 215, 170, 0.7)' },
 ];
 
 function getColorBg(colorName: string): string {
   const color = HIGHLIGHT_COLORS.find(c => c.name === colorName);
-  return color ? color.bg : 'bg-yellow-200';
+  return color ? color.bg : 'bg-yellow-200 dark:bg-yellow-900/50 text-gray-900 dark:text-yellow-100';
 }
 
 export function TextHighlighter({ content, comparisonId, formatContent }: TextHighlighterProps) {
