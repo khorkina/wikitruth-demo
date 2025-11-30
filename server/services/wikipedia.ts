@@ -172,17 +172,20 @@ export class WikipediaService {
 
   async getArticleContent(title: string, language: string = 'en'): Promise<WikipediaArticle> {
     try {
+      // Use TextExtracts API with no character limit for full article content
       const response = await axios.get(`https://${language}.wikipedia.org/w/api.php`, {
         params: {
           action: 'query',
           titles: title,
-          prop: 'extracts|pageids',
+          prop: 'extracts|pageids|revisions',
+          rvprop: 'content',
+          rvslots: 'main',
           exintro: false,
           explaintext: true,
           exsectionformat: 'plain',
           format: 'json'
         },
-        timeout: 15000,
+        timeout: 30000,
         headers: {
           'User-Agent': 'WikiTruth/1.0 (https://wikitruth.app)'
         }
@@ -195,7 +198,50 @@ export class WikipediaService {
         throw new Error(`Article "${title}" not found in ${language} Wikipedia`);
       }
 
-      const content = page.extract || '';
+      // Try to get content from revisions (full wikitext) first, then fall back to extract
+      let content = '';
+      
+      // Get plain text extract (may be truncated by API)
+      const extract = page.extract || '';
+      
+      // Get wikitext from revisions for full content
+      if (page.revisions && page.revisions[0]?.slots?.main?.['*']) {
+        const wikitext = page.revisions[0].slots.main['*'];
+        // Convert wikitext to plain text (basic conversion)
+        content = this.wikitextToPlainText(wikitext);
+      } else if (extract.length > 100) {
+        content = extract;
+      }
+      
+      // If still short, try fetching via parse API for full rendered content
+      if (content.length < 1000) {
+        try {
+          const parseResponse = await axios.get(`https://${language}.wikipedia.org/w/api.php`, {
+            params: {
+              action: 'parse',
+              page: title,
+              prop: 'text',
+              format: 'json',
+              disabletoc: true,
+              disableeditsection: true
+            },
+            timeout: 30000,
+            headers: {
+              'User-Agent': 'WikiTruth/1.0 (https://wikitruth.app)'
+            }
+          });
+          
+          if (parseResponse.data.parse?.text?.['*']) {
+            const htmlContent = parseResponse.data.parse.text['*'];
+            content = this.htmlToPlainText(htmlContent);
+          }
+        } catch (parseError) {
+          console.warn('Parse API fallback failed:', parseError);
+        }
+      }
+      
+      console.log(`Fetched article "${title}" (${language}): ${content.length} characters`);
+      
       return {
         pageid: page.pageid,
         title: page.title,
@@ -207,6 +253,87 @@ export class WikipediaService {
       console.error('Wikipedia content error:', error);
       throw new Error(`Failed to fetch article content for "${title}" in ${language}`);
     }
+  }
+
+  // Convert wikitext to plain text (basic conversion)
+  private wikitextToPlainText(wikitext: string): string {
+    if (!wikitext) return '';
+    
+    let text = wikitext
+      // Remove templates like {{...}}
+      .replace(/\{\{[^{}]*\}\}/g, '')
+      // Remove nested templates
+      .replace(/\{\{[^{}]*\{\{[^{}]*\}\}[^{}]*\}\}/g, '')
+      // Remove categories
+      .replace(/\[\[Category:[^\]]+\]\]/gi, '')
+      .replace(/\[\[Категория:[^\]]+\]\]/gi, '')
+      // Convert wiki links [[Link|Text]] to Text
+      .replace(/\[\[[^\]|]+\|([^\]]+)\]\]/g, '$1')
+      // Convert simple wiki links [[Link]] to Link
+      .replace(/\[\[([^\]]+)\]\]/g, '$1')
+      // Remove external links [http://... text] -> text
+      .replace(/\[https?:\/\/[^\s\]]+ ([^\]]+)\]/g, '$1')
+      // Remove bare external links
+      .replace(/\[https?:\/\/[^\]]+\]/g, '')
+      // Remove refs
+      .replace(/<ref[^>]*>[\s\S]*?<\/ref>/g, '')
+      .replace(/<ref[^>]*\/>/g, '')
+      // Remove HTML comments
+      .replace(/<!--[\s\S]*?-->/g, '')
+      // Remove HTML tags
+      .replace(/<[^>]+>/g, '')
+      // Convert headers == Header == to plain text
+      .replace(/^=+\s*([^=]+)\s*=+$/gm, '\n$1\n')
+      // Remove bold/italic markers
+      .replace(/'{2,}/g, '')
+      // Remove magic words
+      .replace(/__[A-Z]+__/g, '')
+      // Clean up multiple newlines
+      .replace(/\n{3,}/g, '\n\n')
+      // Clean up whitespace
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+    
+    return text;
+  }
+
+  // Convert HTML to plain text
+  private htmlToPlainText(html: string): string {
+    if (!html) return '';
+    
+    let text = html
+      // Remove script and style elements
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      // Remove reference sections
+      .replace(/<sup[^>]*class="[^"]*reference[^"]*"[^>]*>[\s\S]*?<\/sup>/gi, '')
+      // Remove edit links
+      .replace(/<span[^>]*class="[^"]*mw-editsection[^"]*"[^>]*>[\s\S]*?<\/span>/gi, '')
+      // Remove navigation boxes
+      .replace(/<div[^>]*class="[^"]*navbox[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
+      .replace(/<table[^>]*class="[^"]*navbox[^"]*"[^>]*>[\s\S]*?<\/table>/gi, '')
+      // Remove infoboxes
+      .replace(/<table[^>]*class="[^"]*infobox[^"]*"[^>]*>[\s\S]*?<\/table>/gi, '')
+      // Remove table of contents
+      .replace(/<div[^>]*id="toc"[^>]*>[\s\S]*?<\/div>/gi, '')
+      // Add newlines for block elements
+      .replace(/<\/?(?:p|div|h[1-6]|li|tr|br)[^>]*>/gi, '\n')
+      // Remove all remaining HTML tags
+      .replace(/<[^>]+>/g, '')
+      // Decode HTML entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&#39;/g, "'")
+      .replace(/&#\d+;/g, '')
+      // Clean up whitespace
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+    
+    return text;
   }
 
   async getMultipleArticleContents(title: string, languages: string[], baseLanguage: string = 'en'): Promise<WikipediaArticle[]> {
