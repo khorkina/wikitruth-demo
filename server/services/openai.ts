@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { File } from "buffer";
 
 // Using Grok API from x.ai - compatible with OpenAI SDK
 const grok = process.env.GROK_API_KEY 
@@ -29,36 +28,14 @@ export class OpenAIService {
     const { articles, outputLanguage, isFunnyMode = false, premiumOptions } = request;
     
     console.log('Articles being compared:', Object.keys(articles));
-    console.log('Article lengths (full documents):', Object.entries(articles).map(([lang, content]) => 
+    console.log('Article lengths:', Object.entries(articles).map(([lang, content]) => 
       `${lang}: ${content.length} characters`
     ));
     console.log('Premium options received:', premiumOptions);
     
-    const uploadedFileIds: string[] = [];
-    
     try {
       if (!grok) {
         throw new Error('Grok API key not configured');
-      }
-
-      // Upload each Wikipedia article as a separate document file
-      for (const [lang, content] of Object.entries(articles)) {
-        const fileName = `wikipedia_${lang}_article.md`;
-        const fileContent = `# Wikipedia Article (${lang.toUpperCase()})\n\n${content}`;
-        
-        console.log(`Uploading document: ${fileName} (${fileContent.length} bytes)`);
-        
-        // Create a Blob/File from the content
-        const blob = new Blob([fileContent], { type: 'text/markdown' });
-        const file = new globalThis.File([blob], fileName, { type: 'text/markdown' });
-        
-        const uploadedFile = await grok.files.create({
-          file: file,
-          purpose: 'assistants'
-        });
-        
-        uploadedFileIds.push(uploadedFile.id);
-        console.log(`Uploaded file ${fileName} with ID: ${uploadedFile.id}`);
       }
 
       // Determine analysis mode from premiumOptions or isFunnyMode
@@ -70,9 +47,9 @@ export class OpenAIService {
       // Get appropriate system prompt based on analysis mode
       const systemPrompt = this.getSystemPrompt(outputLanguage, analysisMode, formality);
 
-      // Build user prompt referencing the uploaded documents
-      const userPrompt = this.buildUserPromptForDocuments(
-        Object.keys(articles),
+      // Build user prompt with article content directly embedded
+      const userPrompt = this.buildUserPrompt(
+        articles,
         outputLanguage, 
         analysisMode, 
         outputFormat, 
@@ -80,35 +57,26 @@ export class OpenAIService {
         focusPoints
       );
 
-      console.log('Sending request to Grok with', uploadedFileIds.length, 'document files');
+      console.log('Sending request to Grok API with', Object.keys(articles).length, 'articles');
+      console.log('Total content size:', userPrompt.length, 'characters');
 
-      // Use grok-4-fast for larger context window (2M tokens)
+      // Use grok-3-fast for good balance of speed and quality
       const response = await grok.chat.completions.create({
-        model: "grok-4-fast",
+        model: "grok-3-fast",
         messages: [
           { role: "system", content: systemPrompt },
-          { 
-            role: "user", 
-            content: userPrompt,
-            // @ts-ignore - file_ids is supported by Grok API
-            file_ids: uploadedFileIds
-          }
+          { role: "user", content: userPrompt }
         ],
         max_tokens: 8192,
         temperature: 0.7,
       });
 
       const result = response.choices[0].message.content || "No comparison generated";
-      
-      // Clean up uploaded files
-      await this.cleanupFiles(uploadedFileIds);
+      console.log('Grok response received, length:', result.length, 'characters');
       
       return result;
     } catch (error: any) {
       console.error('Grok API error:', error);
-      
-      // Clean up any uploaded files on error
-      await this.cleanupFiles(uploadedFileIds);
       
       if (error.code === 'rate_limit_exceeded') {
         if (error.type === 'tokens') {
@@ -127,19 +95,6 @@ export class OpenAIService {
       }
       
       throw new Error('Failed to generate article comparison: ' + (error.message || 'Unknown error'));
-    }
-  }
-
-  private async cleanupFiles(fileIds: string[]): Promise<void> {
-    if (!grok) return;
-    
-    for (const fileId of fileIds) {
-      try {
-        await grok.files.delete(fileId);
-        console.log(`Deleted file: ${fileId}`);
-      } catch (error) {
-        console.error(`Failed to delete file ${fileId}:`, error);
-      }
     }
   }
 
@@ -182,7 +137,7 @@ COMEDY TECHNIQUES TO USE:
 - Pop culture references and memes where appropriate
 - Breaking the fourth wall to address the reader directly
 
-You have been given the COMPLETE Wikipedia articles as document files. Analyze them thoroughly - read every section, every paragraph. Do not miss any details.
+Analyze the provided Wikipedia articles thoroughly. Do not miss any details.
 
 When referencing text from articles, always translate it to ${outputLanguage} and point out how ABSURD the differences are.
 
@@ -197,8 +152,6 @@ REMINDER: Your entire response must be in ${outputLanguage} only.`;
 CRITICAL REQUIREMENT: You MUST write your entire response in ${outputLanguage} and ONLY in ${outputLanguage}. Do not use any other language regardless of the content of the input articles.
 
 Writing style: ${formalityStyle}
-
-You have been given the COMPLETE Wikipedia articles as document files. Analyze them thoroughly - read every section, every paragraph. Do not miss any details.
 
 Your analysis should focus on:
 - How the person's life story is told differently across cultures
@@ -220,8 +173,6 @@ CRITICAL REQUIREMENT: You MUST write your entire response in ${outputLanguage} a
 
 Writing style: ${formalityStyle}
 
-You have been given the COMPLETE Wikipedia articles as document files. Analyze them thoroughly - read every section, every paragraph, every detail. This is a comprehensive analysis of the full documents.
-
 Your analysis should be:
 - Objective and academically rigorous
 - Focused on factual differences, cultural perspectives, and narrative variations
@@ -241,8 +192,8 @@ When quoting text from articles in other languages, always translate the quotes 
 REMINDER: Your entire response must be in ${outputLanguage} only.`;
   }
 
-  private buildUserPromptForDocuments(
-    languages: string[],
+  private buildUserPrompt(
+    articles: Record<string, string>,
     outputLanguage: string, 
     analysisMode: string, 
     outputFormat: string, 
@@ -287,11 +238,18 @@ REMINDER: Your entire response must be in ${outputLanguage} only.`;
       ? `\n\nUSER'S SPECIFIC FOCUS REQUEST:\nPay special attention to the following aspects as requested by the user:\n"${focusPoints.trim()}"\nMake sure to address these specific points in your analysis.`
       : '';
 
-    const languageList = languages.map(l => l.toUpperCase()).join(', ');
+    // Build article sections with full content
+    const articleSections = Object.entries(articles).map(([lang, content]) => {
+      return `=== WIKIPEDIA ARTICLE (${lang.toUpperCase()}) ===\n${content}\n=== END OF ${lang.toUpperCase()} ARTICLE ===`;
+    }).join('\n\n');
 
-    return `I have attached ${languages.length} COMPLETE Wikipedia article documents about the same topic in different languages: ${languageList}.
+    const languageList = Object.keys(articles).map(l => l.toUpperCase()).join(', ');
 
-Please read and analyze these FULL DOCUMENTS thoroughly. These are the complete Wikipedia articles, not summaries.
+    return `Here are ${Object.keys(articles).length} Wikipedia articles about the same topic in different languages: ${languageList}.
+
+Please read and analyze these articles thoroughly.
+
+${articleSections}
 
 Write your ENTIRE response in ${outputLanguage} language only.
 
@@ -308,10 +266,7 @@ Please provide a comprehensive comparison focusing on:
 
 ${modeInstruction}${focusInstruction}
 
-IMPORTANT: 
-- Read the ENTIRE content of each attached document
-- Compare ALL sections and details
-- Write your response ONLY in ${outputLanguage}. Do not use any other language.`;
+IMPORTANT: Write your response ONLY in ${outputLanguage}. Do not use any other language.`;
   }
 }
 
