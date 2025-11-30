@@ -1,8 +1,11 @@
 import OpenAI from "openai";
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = process.env.OPENAI_API_KEY 
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+// Using Grok API from x.ai - compatible with OpenAI SDK
+const grok = process.env.GROK_API_KEY 
+  ? new OpenAI({ 
+      apiKey: process.env.GROK_API_KEY,
+      baseURL: "https://api.x.ai/v1"
+    })
   : null;
 
 export interface PremiumOptions {
@@ -32,11 +35,11 @@ export class OpenAIService {
     console.log('Premium options received:', premiumOptions);
     
     try {
-      if (!openai) {
-        throw new Error('OpenAI API key not configured');
+      if (!grok) {
+        throw new Error('Grok API key not configured');
       }
 
-      // Use full articles without truncation - GPT-4o supports 128K tokens
+      // Use full articles without truncation - Grok supports large context
       // Format each article clearly with language headers
       let articlesFormatted = '';
       for (const [lang, content] of Object.entries(articles)) {
@@ -62,8 +65,8 @@ export class OpenAIService {
         focusPoints
       );
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+      const response = await grok.chat.completions.create({
+        model: "grok-4-latest",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }

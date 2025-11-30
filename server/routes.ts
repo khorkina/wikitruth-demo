@@ -8,7 +8,7 @@ import { exportService } from "./services/export";
 import { insertComparisonSchema, insertSearchSessionSchema, insertHighlightSchema } from "@shared/schema";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { chatWithOpenAI } from './services/openaiChat';
+import { chatWithGrok } from './services/openaiChat';
 import LimitExceeded from "@/pages/limit-exceeded";
 
 // app/limit-exceeded/page.tsx
@@ -433,11 +433,11 @@ The user is now asking about this analysis. Please provide helpful, conversation
       let reply: string;
 
       try {
-        // 1) пробуем OpenAI
-        reply = await chatWithOpenAI(messages, 0.7, 500);
+        // 1) Try Grok API first
+        reply = await chatWithGrok(messages, 0.7, 500);
       } catch (err) {
-        console.error('OpenAI failed, falling back to OpenRouter', err);
-        // 2) если нет ключа / лимит, откатываемся на OpenRouter
+        console.error('Grok failed, falling back to OpenRouter', err);
+        // 2) If Grok fails, fallback to OpenRouter
         reply = await callOpenRouterWithFallback(messages, 0.7, 500);
       }
 
